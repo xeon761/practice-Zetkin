@@ -58,6 +58,7 @@ services:
       DATABASE_PASSWORD: ${PG_PASS}
       JWT_SECRET: ${STRAPI_JWT_SECRET}
       ADMIN_JWT_SECRET: ${STRAPI_JWT_SECRET}
+      APP_KEYS: ${APP_KEYS:-default-key-1,default-key-2,default-key-3}
     volumes:
       - strapi_config:/opt/strapi/src/config
       - strapi_uploads:/opt/strapi/public/uploads
@@ -67,13 +68,13 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "node /opt/strapi/healthcheck.js"]
-      interval: 30s
-      timeout: 10s
-      retries: 10
-      start_period: 300s
+        test: ["CMD-SHELL", "curl -f http://localhost:1337/_health || exit 1"]
+        interval: 30s
+        timeout: 10s
+        retries: 10
+        start_period: 300s
     deploy:
-      replicas: 2
+        replicas: 2
 
   astro:
     build:
