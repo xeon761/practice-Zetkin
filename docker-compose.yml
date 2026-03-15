@@ -30,7 +30,7 @@ services:
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASS}
       PGADMIN_CONFIG_SERVER_MODE: 'False'
     volumes:
-      - pgadmin_/var/lib/pgadmin
+      - pgadmin_data:/var/lib/pgadmin
       - ./services/pgadmin/servers.json:/pgadmin4/servers.json:ro
     ports:
       - "${PGADMIN_PORT:-5050}:80"
@@ -59,7 +59,7 @@ services:
       JWT_SECRET: ${STRAPI_JWT_SECRET}
       ADMIN_JWT_SECRET: ${STRAPI_JWT_SECRET}
     volumes:
-      - strapi_config:/opt/strapi/src/config
+      - strapi_config:/opt/strapi/config
       - strapi_uploads:/opt/strapi/public/uploads
     networks:
       - app-net
@@ -90,7 +90,15 @@ services:
       strapi:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "node -e \"const http = require('http'); http.get('http://localhost:3000/', (res) => { process.exit((res.statusCode >= 200 && res.statusCode < 400) ? 0 : 1); }).on('error', () => process.exit(1));\""]
+      test:
+        - CMD-SHELL
+        - |
+          node -e '
+            const http = require("http");
+            http.get("http://localhost:3000/", (res) => {
+              process.exit((res.statusCode >= 200 && res.statusCode < 400) ? 0 : 1);
+            }).on("error", () => process.exit(1));
+          '
       interval: 10s
       timeout: 5s
       retries: 10
