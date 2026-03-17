@@ -1,52 +1,250 @@
-# Infrastructure Project: practice-Zetkin
+# practice-Zetkin
 
-# Описание проекта
-Данный репозиторий содержит инфраструктурный код для развертывания веб-приложения, состоящего из Frontend (Astro), Backend (Strapi), Базы данных (Postgres) и Балансировщика (HAproxy).
+## Описание проекта
 
-# Технологический стек
-- **Containerization:** Docker, Docker Compose
-- **Frontend:** Astro
-- **Backend:** Strapi (Node.js)
-- **Database:** PostgreSQL
-- **Load Balancer:** HAproxy
-- **Version Control:** Git
+Проект представляет собой базовую инфраструктуру для веб-приложения с разделением на frontend и backend сервисы.
 
-# Структура репозитория
-- `/services` - Конфигурация и Dockerfile для каждого микросервиса.
-- `/scripts` - Скрипты для управления жизненным циклом (start, stop, backup и т.д.).
-- `/backups` - Директория для хранения локальных бэкапов (не синхронизируется с удаленным репо).
-- `docker-compose.yml` - Основной файл оркестрации.
-- `.env` - Файл переменных окружения (необходимо создать на основе `.env.example`).
+Используемый стек:
 
-# Требования
-- Docker Engine >= 20.10
-- Docker Compose >= 2.0
-- Bash (для скриптов управления)
+* Docker Compose — управление инфраструктурой
+* HAProxy — балансировка и маршрутизация
+* Astro — frontend сервис
+* Strapi — backend сервис
+* PostgreSQL — база данных
+* PgAdmin — администрирование БД
+* GitHub Actions — CI
 
-# Быстрый старт
-1. Клонируйте репозиторий.
-2. Скопируйте `.env.example` в `.env` и заполните значениями.
-3. Запустите проект: `./scripts/start.sh`
-4. Доступ к сервисам через HAproxy: `http://localhost`
+---
 
-## Процесс разработки и доставки кода 
+## Структура проекта
 
-1. **Начало работы:**
-   - Разработчик клонирует репозиторий.
-   - Создает свою ветку от `develop`: `git checkout -b feature/<name>`.
+```
+├── README.md
+├── docker-compose.yml
+├── screenshots
+│   ├── photo_2026-03-18_00-18-57.jpg
+│   ├── photo_2026-03-18_00-19-10.jpg
+│   ├── photo_2026-03-18_00-19-37.jpg
+│   ├── photo_2026-03-18_00-21-00.jpg
+│   └── photo_2026-03-18_00-32-24.jpg
+├── scripts
+│   ├── backup.sh
+│   ├── console.sh
+│   ├── logs.sh
+│   ├── restore.sh
+│   ├── start.sh
+│   ├── stop.sh
+│   └── update.sh
+└── services
+    ├── astro
+    │   ├── Dockerfile
+    │   ├── package.json
+    │   └── src
+    ├── haproxy
+    │   └── haproxy.cfg
+    ├── pgadmin
+    │   ├── server.json
+    │   └── servers.json
+    ├── postgres
+    │   └── init.sql
+    └── strapi
+        ├── Dockerfile
+        ├── config
+        ├── healthcheck.js
+        └── package.json
+```
 
-2. **Разработка:**
-   - Внесение изменений, коммиты в свою ветку.
-   - Тестирование локально через `./scripts/start.sh`.
+---
 
-3. **Доставка (Delivery):**
-   - Пуш ветки в удаленный репозиторий: `git push origin feature/<name>`.
-   - Создание Pull Request (Merge Request) в ветку `develop`.
-   - После код-ревью и тестов — мерж в `develop`.
+## Ветки
 
-4. **Релиз:**
-   - Ответственное лицо мержит `develop` в `main` (master).
-   - Ветка `main` всегда содержит стабильную, рабочую версию инфраструктуры.
-   - Теги версий ставятся на `main`.
+* `develop` — основная рабочая ветка
+* `main` — стабильная версия
 
-**Важно:** Никогда не пушите код напрямую в `main`. Все изменения проходят через `develop`.
+Разработка ведётся в `develop`, изменения доставляются в `main`.
+
+---
+
+## Переменные окружения
+
+Все переменные задаются во внешнем файле `.env`.
+
+Пример:
+
+```
+PROJECT=practice-zetkin
+
+PG_USER=postgres
+PG_PASS=postgres
+PG_DB=app
+PG_PORT=5432
+
+PGADMIN_MAIL=admin@example.com
+PGADMIN_PASS=admin
+
+HPX_PORT=80
+HPX_STATS=8404
+```
+
+---
+
+## Запуск проекта
+
+### 1. Подготовка
+
+```bash
+cp .env.example .env
+```
+
+---
+
+### 2. Запуск
+
+```bash
+./scripts/start.sh
+```
+
+или вручную:
+
+```bash
+docker compose up -d --build --scale astro=2 --scale strapi=2
+```
+
+---
+
+### 3. Остановка
+
+```bash
+./scripts/stop.sh
+```
+
+---
+
+## Сервисы
+
+### HAProxy
+
+* входная точка системы
+* маршрутизация запросов
+* stats страница: `http://localhost:8404`
+
+### Astro (frontend)
+
+* работает на Node.js
+* масштабируется (N+1)
+
+### Strapi (backend)
+
+* подключён к PostgreSQL
+* масштабируется (N+1)
+
+### PostgreSQL
+
+* основная база данных
+* хранение данных в volume
+
+### PgAdmin
+
+* веб-интерфейс для работы с БД
+* доступ: `http://localhost:5050`
+
+---
+
+## CI/CD
+
+Проект использует GitHub Actions.
+
+При каждом push:
+
+* выполняется сборка Docker-образов
+* запускаются контейнеры
+* проверяется корректность конфигурации
+
+Файл конфигурации:
+
+```
+.github/workflows/ci.yml
+```
+
+---
+
+## Сценарии управления
+
+### Запуск
+
+```
+./scripts/start.sh
+```
+
+### Остановка
+
+```
+./scripts/stop.sh
+```
+
+### Логи
+
+```
+./scripts/logs.sh <service_name>
+```
+
+### Консоль
+
+```
+./scripts/console.sh <service_name>
+```
+
+### Резервное копирование
+
+```
+./scripts/backup.sh
+```
+
+### Восстановление
+
+```
+./scripts/restore.sh
+```
+
+### Обновление
+
+```
+./scripts/update.sh
+```
+
+---
+
+## Особенности реализации
+
+* Используется docker-compose для управления стеком
+* Переменные вынесены в `.env`
+* Для сервисов настроен `restart: unless-stopped`
+* Реализованы healthcheck для ключевых сервисов
+* Балансировка нагрузки через HAProxy
+* Поддержка масштабирования сервисов (N+1)
+* Не используется `container_name` для корректной работы scaling
+
+---
+
+## Запуск на новой машине
+
+1. Клонировать репозиторий
+2. Создать `.env` на основе `.env.example`
+3. Выполнить:
+
+```bash
+./scripts/start.sh
+```
+
+После запуска сервисы будут доступны через HAProxy.
+
+---
+
+## Результат
+
+Проект разворачивает полностью готовую инфраструктуру, позволяющую:
+
+* запускать сервисы
+* масштабировать frontend и backend
+* выполнять администрирование
+* выполнять операции сопровождения

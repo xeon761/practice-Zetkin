@@ -1,0 +1,12 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Strapi-DB",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "strapi_dev",
+      "Username": "devuser",
+      "SSLMode": "prefer"
+    }
+  }
+}

@@ -1,0 +1,164 @@
+services:
+
+  postgres:
+    image: postgres:${PG_VER:-16.4-alpine}
+    container_name: ${PROJECT}-db
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_USER: ${PG_USER}
+      POSTGRES_PASSWORD: ${PG_PASS}
+      POSTGRES_DB: ${PG_DB}
+
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./services/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+    ports:
+      - "${PG_PORT:-5432}:5432"
+
+    networks:
+      - app-net
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER} -d ${PG_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+
+
+  pgadmin:
+    image: dpage/pgadmin4:${PGADMIN_VER:-8.12}
+    container_name: ${PROJECT}-pgadmin
+    restart: unless-stopped
+
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_MAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASS}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./services/pgadmin/servers.json:/pgadmin4/servers.json:ro
+
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+
+    networks:
+      - app-net
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+
+
+  strapi:
+    build:
+      context: ./services/strapi
+      dockerfile: Dockerfile
+
+    restart: unless-stopped
+
+    environment:
+      NODE_ENV: production
+
+      DATABASE_CLIENT: postgres
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: ${PG_DB}
+      DATABASE_USERNAME: ${PG_USER}
+      DATABASE_PASSWORD: ${PG_PASS}
+
+      JWT_SECRET: ${STRAPI_JWT_SECRET}
+      ADMIN_JWT_SECRET: ${ADMIN_JWT_SECRET}
+
+    volumes:
+      - strapi_config:/opt/strapi/config
+      - strapi_uploads:/opt/strapi/public/uploads
+
+    networks:
+      - app-net
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    healthcheck:
+      test: ["CMD-SHELL", "node /opt/strapi/healthcheck.js"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 300s
+
+
+
+  astro:
+    build:
+      context: ./services/astro
+      dockerfile: Dockerfile
+
+    restart: unless-stopped
+
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3000
+
+    networks:
+      - app-net
+
+    depends_on:
+      strapi:
+        condition: service_healthy
+
+    healthcheck:
+      test: ["CMD-SHELL", "true"]
+      interval: 10s
+      timeout: 5s
+      retries: 1
+      start_period: 10s
+
+
+
+  haproxy:
+    image: haproxy:${HPX_VER:-2.8.11-alpine}
+    container_name: ${PROJECT}-haproxy
+
+    restart: unless-stopped
+
+    volumes:
+      - ./services/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+
+    ports:
+      - "${HPX_PORT:-80}:80"
+      - "${HPX_STATS:-8404}:8404"
+
+    networks:
+      - app-net
+
+    depends_on:
+      astro:
+        condition: service_healthy
+      strapi:
+        condition: service_healthy
+
+    healthcheck:
+      test: ["CMD-SHELL", "haproxy -c -f /usr/local/etc/haproxy/haproxy.cfg"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+
+networks:
+  app-net:
+    driver: bridge
+
+
+volumes:
+  pg_data:
+  pgadmin_data:
+  strapi_config:
+  strapi_uploads:

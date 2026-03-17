@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+
+jobs:
+  docker-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache npm
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Create .env
+        run: |
+          echo "PROJECT=practice-zetkin" >> .env
+          echo "PG_USER=postgres" >> .env
+          echo "PG_PASS=postgres" >> .env
+          echo "PG_DB=postgres" >> .env
+          echo "PG_PORT=5432" >> .env
+          echo "PGADMIN_MAIL=admin@admin.com" >> .env
+          echo "PGADMIN_PASS=admin" >> .env
+          echo "PGADMIN_PORT=5050" >> .env
+          echo "STRAPI_JWT_SECRET=test" >> .env
+          echo "ADMIN_JWT_SECRET=test" >> .env
+          echo "HPX_PORT=80" >> .env
+          echo "HPX_STATS=8404" >> .env
+
+      - name: Build containers
+        run: docker compose build --progress=plain
+
+      - name: Start services
+        run: docker compose up -d
+
+      - name: Wait for services
+        run: sleep 25
+
+      - name: Show status
+        run: docker compose ps
+
+      - name: Show logs (if failed)
+        if: failure()
+        run: docker compose logs
+
+      - name: Stop services
+        if: always()
+        run: docker compose down -v
