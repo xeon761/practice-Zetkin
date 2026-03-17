@@ -6,7 +6,7 @@ cd "$(dirname "$0")/.."
 echo "Updating..."
 
 if [ -d ".git" ]; then
-    git pull origin develop || echo "Git pull skipped"
+    git pull || echo "Git pull skipped"
 fi
 
 ./scripts/backup.sh

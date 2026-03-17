@@ -1,6 +1,3 @@
-# ===========================================
-# Stage 1: Builder
-# ===========================================
 FROM node:20-alpine AS builder
 
 WORKDIR /opt/strapi
@@ -31,9 +28,6 @@ RUN npm run build
 RUN npm prune --omit=dev
 
 
-# ===========================================
-# Stage 2: Production
-# ===========================================
 FROM node:20-alpine
 
 WORKDIR /opt/strapi

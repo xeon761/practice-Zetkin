@@ -1,52 +1,180 @@
-# Infrastructure Project: practice-Zetkin
+# practice-Zetkin
 
-# Описание проекта
-Данный репозиторий содержит инфраструктурный код для развертывания веб-приложения, состоящего из Frontend (Astro), Backend (Strapi), Базы данных (Postgres) и Балансировщика (HAproxy).
+Инфраструктурный проект для запуска веб-приложения с использованием Docker Compose.
 
-# Технологический стек
-- **Containerization:** Docker, Docker Compose
-- **Frontend:** Astro
-- **Backend:** Strapi (Node.js)
-- **Database:** PostgreSQL
-- **Load Balancer:** HAproxy
-- **Version Control:** Git
+## Стек
 
-# Структура репозитория
-- `/services` - Конфигурация и Dockerfile для каждого микросервиса.
-- `/scripts` - Скрипты для управления жизненным циклом (start, stop, backup и т.д.).
-- `/backups` - Директория для хранения локальных бэкапов (не синхронизируется с удаленным репо).
-- `docker-compose.yml` - Основной файл оркестрации.
-- `.env` - Файл переменных окружения (необходимо создать на основе `.env.example`).
+* Docker Compose
+* HAProxy
+* Astro (frontend)
+* Strapi (backend)
+* PostgreSQL
+* pgAdmin
 
-# Требования
-- Docker Engine >= 20.10
-- Docker Compose >= 2.0
-- Bash (для скриптов управления)
+---
 
-# Быстрый старт
-1. Клонируйте репозиторий.
-2. Скопируйте `.env.example` в `.env` и заполните значениями.
-3. Запустите проект: `./scripts/start.sh`
-4. Доступ к сервисам через HAproxy: `http://localhost`
+## Архитектура
 
-## Процесс разработки и доставки кода 
+* HAProxy принимает все входящие запросы
+* Запросы на `/api`, `/admin` и служебные пути идут в Strapi
+* Остальные — в Astro
+* Strapi работает с PostgreSQL
+* pgAdmin используется для управления базой
 
-1. **Начало работы:**
-   - Разработчик клонирует репозиторий.
-   - Создает свою ветку от `develop`: `git checkout -b feature/<name>`.
+---
 
-2. **Разработка:**
-   - Внесение изменений, коммиты в свою ветку.
-   - Тестирование локально через `./scripts/start.sh`.
+## Установка
 
-3. **Доставка (Delivery):**
-   - Пуш ветки в удаленный репозиторий: `git push origin feature/<name>`.
-   - Создание Pull Request (Merge Request) в ветку `develop`.
-   - После код-ревью и тестов — мерж в `develop`.
+### 1. Клонировать репозиторий
 
-4. **Релиз:**
-   - Ответственное лицо мержит `develop` в `main` (master).
-   - Ветка `main` всегда содержит стабильную, рабочую версию инфраструктуры.
-   - Теги версий ставятся на `main`.
+```bash
+git clone https://github.com/xeon761/practice-Zetkin.git
+cd practice-Zetkin
+```
 
-**Важно:** Никогда не пушите код напрямую в `main`. Все изменения проходят через `develop`.
+### 2. Настроить переменные окружения
+
+```bash
+cp .env.example .env
+nano .env
+```
+
+### 3. Запустить проект
+
+```bash
+./scripts/start.sh
+```
+
+---
+
+## Доступ к сервисам
+
+* Frontend: http://localhost
+* Strapi admin: http://localhost/admin
+* pgAdmin: http://localhost:5050
+* HAProxy stats: http://localhost:8404/stats
+
+---
+
+## Скрипты
+
+### Запуск
+
+```bash
+./scripts/start.sh
+```
+
+### Остановка
+
+```bash
+./scripts/stop.sh
+```
+
+### Обновление
+
+```bash
+./scripts/update.sh
+```
+
+### Бэкап базы
+
+```bash
+./scripts/backup.sh
+```
+
+### Восстановление
+
+```bash
+./scripts/restore.sh
+```
+
+### Логи
+
+```bash
+./scripts/logs.sh <service>
+```
+
+Пример:
+
+```bash
+./scripts/logs.sh strapi
+```
+
+### Консоль
+
+```bash
+./scripts/console.sh <service>
+```
+
+Пример:
+
+```bash
+./scripts/console.sh postgres
+```
+
+---
+
+## Healthcheck
+
+* PostgreSQL — через `pg_isready`
+* Strapi — кастомный endpoint
+* HAProxy — проверка конфигурации
+* Astro — базовый
+
+---
+
+## Балансировка
+
+HAProxy распределяет запросы между несколькими экземплярами Astro и Strapi.
+Если один контейнер падает — трафик идёт в оставшиеся.
+
+---
+
+## Бэкапы
+
+* Используется `pg_dump`
+* Бэкап сохраняется в `backups/`
+* Старые файлы удаляются автоматически
+* Восстановление берёт последний архив
+
+---
+
+## Структура проекта
+
+```
+.
+├── services/
+│   ├── astro/
+│   ├── strapi/
+│   ├── haproxy/
+│   └── postgres/
+├── scripts/
+├── backups/
+├── docker-compose.yml
+├── .env
+└── README.md
+```
+
+---
+
+## Требования
+
+* Docker
+* Docker Compose
+
+---
+
+## Как проверить отказоустойчивость
+
+1. Запустить проект
+2. Открыть HAProxy stats
+3. Остановить один из контейнеров Astro или Strapi
+4. Убедиться, что сайт продолжает работать
+
+---
+
+## Git workflow
+
+* `main` — стабильная версия
+* `develop` — разработка
+* `feature/*` — новые задачи
