@@ -11,6 +11,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Setup env
+        run:  cp .env.example .env
       - name: Checkout
         uses: actions/checkout@v4
 
