@@ -12,7 +12,7 @@ echo "Starting services..."
 docker compose down --remove-orphans 2>/dev/null || true
 docker compose up -d --build --scale astro=2 --scale strapi=2
 
-sleep 20
+sleep 13
 
 echo ""
 echo "Services up!"

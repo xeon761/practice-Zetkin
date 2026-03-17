@@ -53,10 +53,6 @@ services:
       postgres:
         condition: service_healthy
 
-    profiles:
-      - dev
-      - all
-
 
 
   strapi:
@@ -94,7 +90,7 @@ services:
       test: ["CMD-SHELL", "node /opt/strapi/healthcheck.js"]
       interval: 30s
       timeout: 10s
-      retries: 10
+      retries: 5
       start_period: 300s
 
 

@@ -37,9 +37,10 @@ RUN apk add --no-cache vips
 RUN addgroup -S strapi -g 1001 && \
     adduser -S strapi -u 1001 -G strapi
 
-COPY --from=builder /opt/strapi /opt/strapi
+COPY --from=builder --chown=strapi:strapi /opt/strapi /opt/strapi
 
-RUN chown -R strapi:strapi /opt/strapi
+RUN mkdir -p /opt/strapi/database \
+    && chown strapi:strapi /opt/strapi/database
 
 USER strapi
 
