@@ -19,24 +19,39 @@
 ## Структура проекта
 
 ```
-.
+├── README.md
 ├── docker-compose.yml
-├── .env.example
-├── scripts/
-│   ├── start.sh
-│   ├── stop.sh
-│   ├── backup.sh
-│   ├── restore.sh
-│   ├── update.sh
-│   ├── logs.sh
-│   └── console.sh
-├── services/
-│   ├── astro/
-│   ├── strapi/
-│   ├── haproxy/
-│   ├── postgres/
-│   └── pgadmin/
-└── .github/workflows/ci.yml
+├── screenshots
+│   ├── photo_2026-03-18_00-18-57.jpg
+│   ├── photo_2026-03-18_00-19-10.jpg
+│   ├── photo_2026-03-18_00-19-37.jpg
+│   ├── photo_2026-03-18_00-21-00.jpg
+│   └── photo_2026-03-18_00-32-24.jpg
+├── scripts
+│   ├── backup.sh
+│   ├── console.sh
+│   ├── logs.sh
+│   ├── restore.sh
+│   ├── start.sh
+│   ├── stop.sh
+│   └── update.sh
+└── services
+    ├── astro
+    │   ├── Dockerfile
+    │   ├── package.json
+    │   └── src
+    ├── haproxy
+    │   └── haproxy.cfg
+    ├── pgadmin
+    │   ├── server.json
+    │   └── servers.json
+    ├── postgres
+    │   └── init.sql
+    └── strapi
+        ├── Dockerfile
+        ├── config
+        ├── healthcheck.js
+        └── package.json
 ```
 
 ---
